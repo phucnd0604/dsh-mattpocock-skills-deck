@@ -7,7 +7,10 @@
  * 1. 由 index.js 动态引用加载，依赖全显式传入（normCwd 与单票分发前奏经 index 转供给复用，不各留一份拷贝），本文件不引用其它新文件。
  * 2. 最新文档的挑选是修改时间倒序加文件名倒序兜底（时间戳文件名本身字典序即时间序），交接目录读不到时按「还没有交接文档」处理，不抛错。
  * 3. 客户端带期望文件名时只做精确匹配或前缀匹配，找不到就回空，不许退回最新那份（退回会引用到上一次的老文档，与修复目标相悖）。
+ * Claiming needs a repo reference and an execution channel (panelRepoRef resolves the repo the backend knows,
+ * execProc runs the backend's command line); both arrive through the dependency object.
  */
+import { resolvePanelRepoRef } from '../shared/panel-repo-ref.js'
 
 // ---------------------------------------------------------------------------
 // 类型（本次转 TypeScript：只写类型不写实现）。
@@ -28,6 +31,9 @@ interface HandoffClaimDeps {
   ctx: any
   getRepoKey: any
   runGh: any
+  // The claim path runs the backend's command line (fetching the current user before setAssignees, for
+  // example); execProc is its only execution channel.
+  execProc: any
   setCache: any
   logCtx: any
 }
@@ -45,7 +51,7 @@ interface HandoffEntry {
  * 什么约定不能改：返回对象的三个字段名是调用点按名取的，改名调用点就拿不到。
  */
 export function createHandoffClaim(deps: HandoffClaimDeps): any {
-  const { fs, DEFAULT_CWD, normCwd, getDetectionService, getTrackerRegistry, getPlatform, ctx, getRepoKey, runGh, setCache, logCtx } = deps as any
+  const { fs, DEFAULT_CWD, normCwd, getDetectionService, getTrackerRegistry, getPlatform, ctx, getRepoKey, runGh, execProc, setCache, logCtx } = deps as any
   // ============ 交接文档（issue #12 BUG4 · 双重防御 · 副路径）============
   // DSH 沙箱里 fs.stat 返回的 info.mtime 形态不可控（Date / ISO 串 / 秒级 Unix / 本地化串 / null / NaN）；
   // 原 `typeof number ? mt : Date.parse(String(mt))` 在 Date 对象或不可 parse 形态都得 NaN；
@@ -177,8 +183,10 @@ export function createHandoffClaim(deps: HandoffClaimDeps): any {
       if (!tracker || typeof tracker.setAssignees !== 'function') return { ok: false, error: { kind: 'unsupported', message: "backend '" + backendId + "' 未实现 setAssignees" } }
       let repoRef: any = null
       try { repoRef = reg.describe({ cwd }, backendId) } catch {}
-      if (!repoRef) repoRef = { backend: backendId, refId: cwd, name: String(cwd).split(/[\\/]/).pop() || backendId, url: '' }
-      const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs') }
+      // The claim path also runs the backend's command line, so opCtx has to carry its own exec: the same
+      // gap as the panel read paths (1.9.0-beta.5 omitted it, and the GitLab room failed with "exec unavailable").
+      const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs'), exec: async function (cmd: any, cargs: any, opts: any): Promise<any> { const argv: any = [String(cmd)].concat(cargs || []); const c: any = (opts && opts.cwd) || cwd; const r2: any = await execProc(argv, c, 'handoff-claim'); if (!r2.ok) throw new Error(r2.error || String(r2.code || 'exec failed')); return { stdout: r2.text, text: r2.text, ok: true, code: Number.isInteger(r2.code) ? r2.code : 0 } } }
+      repoRef = await resolvePanelRepoRef(reg, backendId, repoRef, cwd, opCtx)
       const key: string = String(n).padStart(2, '0')
       // 尝试取当前用户
       let assignee: string = 'me'

@@ -1,19 +1,26 @@
-# 提交信息规范
+# Commit message convention
 
-`git commit` 信息一律用中文，完整句说清改了什么、为什么改。
+Every `git commit` message is written in **English**, in complete sentences that say what changed and why.
 
-## 规则
+## Rules
 
-1. **标题**：一句完整描述，至少 10 个字，句末括号写涉及票号：单票 `（#1136）`，多票 `（#1057、#1063）`，需说明关系时接短句 `（#1052 收尾）`。票号写 `#` 加数字、放行尾、按升序、顿号分隔；不写裸编号、不用半角括号。PR 号写作 `PR #977`，与票号区分。
-2. **正文**：说明改动内容与原因，并写一句验证情况——跑了哪几道检查、结果如何；未验证就如实说明。
-3. **票号须真实**：提交前读一眼该票，确认编号与主题对应。
-4. **一次提交只做一件可独立交付的事**；涉及多票且进展不同时，正文分条说明。
+1. **Title**: one complete description, at least 10 characters, with the ticket numbers it touches in
+   parentheses at the end: one ticket `(#1136)`, several `(#1057, #1063)`, and a short qualifier when the
+   relationship needs saying `(#1052 wrap-up)`. Write a ticket number as `#` plus digits, at the end of the
+   line, in ascending order, separated by commas; never a bare number, never half-width brackets. A PR number
+   is written `PR #977` so it cannot be confused with a ticket number.
+2. **Body**: say what the change contains and why, plus one sentence about verification — which checks were
+   run and how they came out; if nothing was verified, say so honestly.
+3. **Ticket numbers must be real**: before committing, read that ticket once and confirm the number matches
+   the topic.
+4. **One commit carries one independently deliverable piece of work**; when several tickets are involved with
+   different progress, describe them as separate paragraphs in the body.
 
-## 示例
+## Example
 
 ```
-把 issueDetail 从 JavaScript 转成 TypeScript，行为零变化（#1161）
+Convert issueDetail from JavaScript to TypeScript with zero behaviour change (#1161)
 
-补齐两个入口的返回类型标注，逻辑未改。
-tsc 与 tests/verify-1053-issue-write 已跑通，冒烟六条全绿。
+Add the missing return type annotations on both entry points; the logic is untouched.
+tsc and tests/verify-1053-issue-write pass; the smoke set is green.
 ```

@@ -36,6 +36,7 @@ export interface WorkspaceLabelColorsDeps {
 }
 
 /** 造两条标签配色电话的处理体。依赖全部由父文件 createWorkspaceCwd 显式传入，本文件不自取任何环境。 */
+import { resolvePanelRepoRef } from '../shared/panel-repo-ref.js'
 export function createWorkspaceLabelColors(deps: any): { handleListLabels: (args: any) => Promise<any>; handleSetLabelColors: (args: any) => Promise<any> } {
   const { normCwd, getTrackerRegistry, getPlatform, opCtxFor, resolveSandboxPolicy, getDecisionFn, getDetectionService }: any = deps
   // ============ 标签配色两条电话（#627 契约票）============
@@ -219,7 +220,9 @@ export function createWorkspaceLabelColors(deps: any): { handleListLabels: (args
     if (!picked.ok) return picked
     const sb: any = resolveSandboxPolicy(args, cwd)
     let res: any = null
-    try { res = await picked.tracker.listLabels(picked.repoRef, opCtxFor(cwd, picked.platform, picked.repoRef, 'wf.listLabels', signal, sb.policy, sb.sessionId)) } catch (e) { return pluginTrouble('修改标签颜色', '插件没有拿回结果，因此无法确认这次读取有没有成功（也就不知道仓库里的标签现在是什么样）：请重试一次；如果仍然失败，请把这条提示原文报告给插件维护者', msgOf(e)) }
+    const opCtx: any = opCtxFor(cwd, picked.platform, picked.repoRef, 'wf.listLabels', signal, sb.policy, sb.sessionId)
+    picked.repoRef = await resolvePanelRepoRef(await getTrackerRegistry(), picked.backendId, picked.repoRef, cwd, opCtx)
+    try { res = await picked.tracker.listLabels(picked.repoRef, opCtx) } catch (e) { return pluginTrouble('修改标签颜色', '插件没有拿回结果，因此无法确认这次读取有没有成功（也就不知道仓库里的标签现在是什么样）：请重试一次；如果仍然失败，请把这条提示原文报告给插件维护者', msgOf(e)) }
     if (!res || res.ok !== true) return backendFailure(res, '列出标签')
     if (!Array.isArray(res.data)) return pluginTrouble('列出标签', '后端返回的标签清单不符合约定格式（应为数组）', typeof res.data)
     return { ok: true, backendId: picked.backendId, labels: res.data }
@@ -240,7 +243,9 @@ export function createWorkspaceLabelColors(deps: any): { handleListLabels: (args
     if (!picked.ok) return picked
     const sb: any = resolveSandboxPolicy(args, cwd)
     let res: any = null
-    try { res = await picked.tracker.setLabelColors(picked.repoRef, changes, opCtxFor(cwd, picked.platform, picked.repoRef, 'wf.setLabelColors', signal, sb.policy, sb.sessionId)) } catch (e) { return pluginTrouble('修改标签颜色', '插件没有拿回改动结果，所以仓库里的颜色有没有被改动、哪些被改动，现在都无从确认。请先看一眼标签现在的颜色（去仓库或面板里看一眼都行），再重试一次；如果仍然失败，请把这条提示原文报告给插件维护者', msgOf(e)) }
+    const opCtx: any = opCtxFor(cwd, picked.platform, picked.repoRef, 'wf.setLabelColors', signal, sb.policy, sb.sessionId)
+    picked.repoRef = await resolvePanelRepoRef(await getTrackerRegistry(), picked.backendId, picked.repoRef, cwd, opCtx)
+    try { res = await picked.tracker.setLabelColors(picked.repoRef, changes, opCtx) } catch (e) { return pluginTrouble('修改标签颜色', '插件没有拿回改动结果，所以仓库里的颜色有没有被改动、哪些被改动，现在都无从确认。请先看一眼标签现在的颜色（去仓库或面板里看一眼都行），再重试一次；如果仍然失败，请把这条提示原文报告给插件维护者', msgOf(e)) }
     if (!res || res.ok !== true) return backendFailure(res, '修改标签颜色')
     const data: any = res.data
     if (!data || typeof data !== 'object' || !Array.isArray(data.applied) || !Array.isArray(data.failed)) return pluginTrouble('修改标签颜色', '后端没有说清哪些标签的颜色改成功了、哪些没改成功（内部把这两份清单叫 applied 与 failed）。请重试一次；如果仍然失败，请把这条提示原文报告给插件维护者')

@@ -253,7 +253,7 @@ declare function resolveFailText(...args: any[]): any;
           })
           try {
             if (typeof host !== 'undefined' && host.call) {
-              await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined }) // hint 只报「用户亲手选过的那条」：#669 第 6 件 / ADR 20260921
+              await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined, lang: (typeof promptLang === 'function' ? promptLang() : 'zh') }) // hint 只报「用户亲手选过的那条」：#669 第 6 件 / ADR 20260921
               try { if (typeof loadSnapshot === 'function') loadSnapshot(st, true, true) } catch(_){}
               try { if (typeof loadChain === 'function') loadChain(st, true) } catch(_){}
             }

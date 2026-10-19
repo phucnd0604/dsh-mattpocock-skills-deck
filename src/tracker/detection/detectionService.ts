@@ -81,7 +81,7 @@ interface DecideBackendLike {
   selectionFromOutlet?: (answer: unknown, describeOf: (id: string) => unknown) => Selection | null
 }
 /** 技能探测：名单由探针闭包按范围选（见 host probeSkill）。 */
-type SkillProbeLike = (opts: { cwd: string; platform: PlatformLike | null; skillScope: string; force: boolean }) => Promise<unknown>
+type SkillProbeLike = (opts: { cwd: string; platform: PlatformLike | null; skillScope: string; force: boolean; lang?: unknown }) => Promise<unknown>
 /** 服务依赖。除 registry 外都可省：省掉的那件按本文件里「没有就退让」的分支走。 */
 interface DetectionServiceDeps {
   registry: RegistryLike
@@ -105,6 +105,8 @@ interface DetectOptions {
   signal?: unknown
   skipSkillProbes?: boolean
   skillScope?: string
+  /** Which language the panel speaks ('en' / 'zh'): the skill-probe detail lines follow it; default zh, as before. */
+  lang?: unknown
 }
 /** 一次判定用的操作上下文（BackendContext & {cwd, signal} 的按需形状）。 */
 interface OpContextLike {
@@ -418,7 +420,7 @@ export function createDetectionService({ registry, getPlatform, getFs, getTimers
     // #284：wf.chain 只取 selection，跳过技能探测（避免等待计数被链加载外的轮次推进；计数仅随真实探针轮次推进）
     // #968 技能按需：调用方明确说要全量就问全量，人亲手重查（force）问全量，其余平时只问链条要的三项。
     // 范围与重查标记一起交过去：重查的那一次单项探测绕过短时记住，刚装好的技能立即可见。
-    if (!opts.skipSkillProbes) { try { skillProbes = await probeSkills({ cwd, platform, skillScope: opts.skillScope || (force ? 'full' : 'chain'), force: force }) } catch { skillProbes = null } }
+    if (!opts.skipSkillProbes) { try { skillProbes = await probeSkills({ cwd, platform, skillScope: opts.skillScope || (force ? 'full' : 'chain'), force: force, lang: opts.lang }) } catch { skillProbes = null } }
 
     const result = {
       handle: { cwd },

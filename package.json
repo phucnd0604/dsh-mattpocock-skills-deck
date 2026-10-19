@@ -1,9 +1,9 @@
 {
   "name": "dsh-mattpocock-skills-deck",
-  "version": "1.9.0-beta.5",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FeatherHunter/dsh-mattpocock-skills-deck.git"
+    "url": "https://github.com/phucnd0604/dsh-mattpocock-skills-deck.git"
   },
   "private": true,
   "engines": {
@@ -13,7 +13,6 @@
     "build": "node scripts/build.mts",
     "typecheck": "node scripts/generate-time-config.mts --check && node scripts/typecheck.mts",
     "update:latest": "pnpm update dsh-plugin-update@^0.18.25 && node scripts/derive-update-from-package.mts && node scripts/build.mts",
-    "prepare": "node scripts/build.mts",
     "test": "npm run typecheck && node scripts/build.mts && node scripts/verify-chain.ts && npm run test:smoke",
     "smoke": "node --import ./scripts/ts-hook.mts tests/smoke-client.test.ts && node --import ./scripts/ts-hook.mts tests/smoke-host-dispatch.test.ts && node --import ./scripts/ts-hook.mts tests/smoke-render.test.ts && node --import ./scripts/ts-hook.mts tests/smoke-naming-persistence.test.ts && node --import ./scripts/ts-hook.mts tests/smoke-comment-passthrough.test.ts",
     "test:smoke": "node scripts/verify-chain.ts --script smoke",
@@ -22,7 +21,8 @@
     "verify:fast": "node scripts/verify-parallel.mts --tier fast",
     "verify:changed": "node scripts/verify-parallel.mts --changed",
     "verify": "node scripts/verify-chain.ts",
-    "sync:matt": "node scripts/sync-matt-skills.mts --pin v1.3.1 --verify"
+    "sync:matt": "node scripts/sync-matt-skills.mts --pin v1.3.1 --verify",
+    "prepare": "node scripts/build.mts"
   },
   "dependencies": {
     "dsh-log": "^0.3.4",
@@ -49,6 +49,22 @@
     "bundle": {
       "mode": "patch",
       "patch": "./package/cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
     }
-  }
+  },
+  "main": "package/lib/index.js",
+  "exports": {
+    ".": "./package/lib/index.js",
+    "./client": "./package/lib/client.js",
+    "./tools": "./package/deck/registration/agent-row.js",
+    "./cordis.patch.yml": "./package/cordis.patch.yml",
+    "./package.json": "./package/package.json"
+  },
+  "files": [
+    "package"
+  ]
 }

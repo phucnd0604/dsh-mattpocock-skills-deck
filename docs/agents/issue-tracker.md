@@ -2,87 +2,106 @@
 
 Issues and specs for this repo live as GitHub issues.
 
-## 怎么做（先看这一节）
+## How to work with tickets (read this section first)
 
-**这个仓库的票，用插件自带的工具来读写，不要手敲跟踪器命令。** 这些工具坐在插件的契约层之上：工具自己
-按当前后端把事情做完，并且读回来核对；同一个工具在后端不是 GitHub 时照样能用，所以这份说明里不写命令。
+**Read and write this repo's tickets with the plugin's own tools, not by typing tracker commands by hand.**
+Those tools sit on top of the plugin's contract layer: they do the work the current backend needs and read the
+result back to check it; the same tool still works when the backend is not GitHub, which is why this document
+does not spell out commands.
 
-**这些工具回给你的是三段**：一段人话摘要、一段「本次调用的提示」（工具对这次拿得全不全的如实警告，
-有降级时才有，比如按节标题只取到一段正文），然后是一段标着「明细（JSON）」的明细。明细里装的是这次真正
-查到的内容——票正文、评论、标签、子票、地图五区块、补边时每条边落在哪一列的证据，按需给到。总量超过上限
-时压掉的是尾部条目并在原地写明「还有几项未带回」，不会让你把缺了东西的当完整的用。想要更小但完整的一段，
-就调该工具自己的参数（读一张票的评论条数、列票的条数、只看可接子票），而不是硬等。
+**Each tool hands back three parts**: a plain-language summary, a "this call" hint section (the tool's honest
+warning about how complete the answer is, present only when something degraded — for example when a section
+heading restricted the body to one section), and a detail block marked "detail (JSON)". The detail block holds
+what was really fetched — ticket body, comments, labels, sub-issues, the map's five sections, and for an edge
+the column that edge landed in, each on demand. When the total exceeds a limit, the tail entries are dropped
+and the place says "N more items were not returned", so a missing part is never mistaken for a complete one.
+For a smaller but complete slice, use that tool's own parameters (how many comments of one ticket, how many
+rows to list, frontier sub-issues only) instead of waiting for more.
 
-- 建一张票 → `deck_issue_create`
-- 读一张票 → `deck_issue_get`
-- 看有哪些地图、有哪些开放票 → `deck_context`
-- 看一张地图的子票与进度 → `deck_map_snapshot`
-- 按状态与标签和认领列薄行 → `deck_issue_list`
-- 一次建出一整张地图（地图本身 + 子票 + 它们之间的边）→ `deck_map_plan_create`
-- 补一条边（父子边或阻塞边）→ `deck_map_link`
-- 改一张票（评论 / 标签 / 认领 / 关闭 / 改正文）→ `deck_issue_patch`
+- Create a ticket → `deck_issue_create`
+- Read one ticket → `deck_issue_get`
+- See which maps and which open tickets exist → `deck_context`
+- See a map's sub-issues and progress → `deck_map_snapshot`
+- List thin rows by state, label and assignee → `deck_issue_list`
+- Build a whole map in one call (the map itself + sub-issues + the edges between them) → `deck_map_plan_create`
+- Add one edge (parent-child or blocking) → `deck_map_link`
+- Change one ticket (comment / labels / assignee / close / body) → `deck_issue_patch`
 
-工具管不到的地方只剩两件事，它们都发生在跟踪器之外：
+Only two things are outside the tools' reach, and both happen outside the tracker:
 
-- **登录**：运行 `gh auth login` 并按提示在浏览器完成授权，再用 `gh auth status` 确认已经登录。
-- **建仓库**：用 `gh repo create` 建好远端仓库并推上去。面板上的「创建并发布」向导会替你做这一件事，
-  所以正常情况下不需要手敲它。
+- **Login**: run `gh auth login`, finish the browser authorization it asks for, then confirm with
+  `gh auth status`.
+- **Create a repository**: create the remote repository with `gh repo create` and push to it. The panel's
+  "create and publish" wizard does this one for you, so normally you do not type it by hand.
 
-除了上面这两件事，这份说明里不再出现任何 `gh` 命令。
+Apart from those two, no `gh` command appears anywhere in this document.
 
-### 写正文时的一条通用规则
+### One rule for writing a body
 
-正文先写成文件（文件里是真实换行：每个 `## 章节` 独占一行、段落之间留一个空行），再交给工具写回；
-不要把正文拼进命令行，也不要把换行写成字面的 `\n` 两个字符，更不要让正文以不可见字符（BOM）开头。
-写完读回来核对一遍。这条规则三个后端通用，不是 GitHub 专有的。
+Write the body into a file first (with real line breaks: each `## section` on its own line, one blank line
+between paragraphs) and hand the file to the tool — do not paste the body into a command line, do not write
+line breaks as the two literal characters `\n`, and do not let the body start with an invisible character
+(a BOM). Read it back after writing and check it. This rule holds for all three backends, it is not
+GitHub-specific.
 
-### 拿不到原生能力时的降级写法
+### The fallback when a native capability is missing
 
-工具会优先用后端自己的原生能力（GitHub 上是原生子议题与原生依赖边）。真拿不到时，才退回在子票正文首行
-写一行 `Blocked by: #n`（多个阻塞票号用逗号隔开）。这一行是三后端共用的降级写法，不许拿它当默认做法。
+The tools prefer the backend's own native capability (on GitHub that is native sub-issues and native
+dependency edges). Only when that is genuinely unavailable do they fall back to a `Blocked by: #n` line in
+the first line of the sub-ticket's body (several blocking numbers separated by commas). That line is the
+shared fallback of all three backends and must not be used as the default way.
 
 ## Mandatory label set
 
-This repo uses a mandatory label set — the three labels below must exist in the tracker, and every new issue carries at least one of them (missing = invalid, per the deck's convention):
+This repo uses a mandatory label set — the three labels below must exist in the tracker, and every new issue
+carries at least one of them (missing = invalid, per the deck's convention):
 
 - `bug` — something is broken; drives the deck's fix action and BUG filter
 - `needs-triage` — unexamined issue awaiting diagnosis; drives the deck's diagnose action and TRIAGE filter
 - `wayfinder:grilling` — an open decision/discussion ticket; drives the deck's discuss action
 
-建票时必备标签由 `deck_issue_create` 一并补上；改标签用 `deck_issue_patch`。
+When creating a ticket, `deck_issue_create` adds the required labels for you; change labels with
+`deck_issue_patch`.
 
 ## Pull requests as a triage surface
 
-**PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
+**PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests;
+`/triage` reads this flag.)_
 
-这一项写成 `yes` 之后，PR 与 issue 走同一套标签与状态流转，按当前后端自己的方式读写 PR（在这条后端上就是
-命令行里把 issue 那一族子命令换成 PR 那一族）。GitHub 把 issue 与 PR 编在同一套号码里，所以正文里光写
-`#42` 分不清是哪一个 —— 遇到这种编号要么把两种都查一遍，要么直接向用户确认是哪一个。
+Once this is `yes`, pull requests and issues follow the same labels and state transitions, and a PR is read
+and written the way the current backend does it (on this backend: swap the issue family of subcommands for
+the PR family). GitHub numbers issues and PRs in one sequence, so `#42` in a body alone does not say which
+one it is — when you meet such a number, look up both, or ask the user which one it is.
 
 ## When a skill says "publish to the issue tracker"
 
-用 `deck_issue_create` 建一张票。
+Create one ticket with `deck_issue_create`.
 
 ## When a skill says "fetch the relevant ticket"
 
-用 `deck_issue_get` 读那张票（连同它的评论与标签）。
+Read that ticket with `deck_issue_get` (together with its comments and labels).
 
 ## Wayfinding operations
 
-Used by `/wayfinder`. The **map** is a single issue with **child** issues as tickets. 下面这几件事全部走工具，
-一处都不手敲命令。
+Used by `/wayfinder`. The **map** is a single issue with **child** issues as tickets. Everything below goes
+through the tools; nothing here is typed as a command.
 
-- **Map**: 一张打了 `wayfinder:map` 标签的票，正文里放着 Notes / Decisions-so-far / Fog。用
-  `deck_map_plan_create` 建（它会把目的地、Notes 与计划写成一张地图）。
-- **Child ticket**: 挂在这张地图下的子票。用 `deck_map_link` 传 `parentKey` 建这条父子边；工具会按当前后端
-  的能力落下去，并如实回报这条边落在哪一列（原生边，还是退回任务清单 + 正文首行 `Part of #<map>`）。
-  标签取 `wayfinder:<类型>`（`research` / `prototype` / `grilling` / `task`）。票被认领之后，认领人就是驱动
-  这件事的开发者（认领用 `deck_issue_patch`）。
-- **Blocking**: 阻塞关系优先落成后端自己的原生依赖边（GitHub 上是原生的 issue dependencies，界面上看得见）。
-  用 `deck_map_link` 传 `blockedBy`，工具自己判断能不能落原生边、落不了就退回正文首行的 `Blocked by: #n`，
-  并把落在哪一列告诉你。一张票要等所有阻塞它的票都关闭了才算解除阻塞。
-- **Frontier query**: 用 `deck_map_snapshot` 读这张地图的开放子票，去掉还能被阻塞的（依赖边指向仍未关闭的
-  票，或正文 `Blocked by` 那行里还有没关的票）与已经被认领的；剩下的按地图里的先后顺序取第一条。
-- **Claim**: 用 `deck_issue_patch` 把这张票指给当前用户 —— 这是本会话的第一笔写操作。
-- **Resolve**: 用 `deck_issue_patch` 先发一条评论写清结论，再关闭这张票；然后到地图的 Decisions-so-far 里
-  补一行指针（一句话结论 + 链接）。
+- **Map**: one ticket carrying the `wayfinder:map` label, with Notes / Decisions-so-far / Fog in its body.
+  Create it with `deck_map_plan_create` (it writes the destination, the Notes and the plan as one map).
+- **Child ticket**: a sub-ticket hanging under that map. Create the parent-child edge with `deck_map_link`
+  by passing `parentKey`; the tool lands it the way the current backend can and reports honestly in which
+  column the edge landed (a native edge, or the fallback of a task list plus a `Part of #<map>` line in the
+  first line of the body). The label is `wayfinder:<kind>` (`research` / `prototype` / `grilling` /
+  `task`). Once a ticket is claimed, the assignee is the developer driving it (claim with
+  `deck_issue_patch`).
+- **Blocking**: a blocking relationship is landed as the backend's own native dependency edge (on GitHub,
+  native issue dependencies, visible in the interface). Pass `blockedBy` to `deck_map_link`; the tool
+  decides whether a native edge can be landed, falls back to a `Blocked by: #n` line in the first line of
+  the body when it cannot, and tells you which column it landed in. A ticket is unblocked only once every
+  ticket blocking it is closed.
+- **Frontier query**: read the map's open sub-issues with `deck_map_snapshot`, drop the ones that can still
+  be blocked (a dependency edge points at a ticket that is not closed, or the body's `Blocked by` line still
+  names an open ticket) and the ones already claimed; of what remains, take the first in the map's own order.
+- **Claim**: point the ticket at the current user with `deck_issue_patch` — this is the session's first write.
+- **Resolve**: with `deck_issue_patch`, post one comment that writes down the conclusion, then close the
+  ticket; then add one pointer line to the map's Decisions-so-far (a one-sentence conclusion plus a link).

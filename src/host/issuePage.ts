@@ -47,6 +47,7 @@ interface IssuePageDeps {
  * 为什么：在途去重表活在闭包里，同一组装实例共享同一张表，并发取同一页时只发一次。
  * 什么约定不能改：返回对象的两个字段名（handleIssuesPage 给调用点按名取，clientRowOf 给测试按名取），改名就拿不到。
  */
+import { resolvePanelRepoRef } from '../shared/panel-repo-ref.js'
 export function createIssuePage(deps: IssuePageDeps): any {
   const { normCwd, selectEarly, getTrackerRegistry, getPlatform, getRepoKey, ctx, DEFAULT_CWD, detectionExec, logCtx } = deps as any
 
@@ -111,14 +112,6 @@ export function createIssuePage(deps: IssuePageDeps): any {
     if (!tracker || typeof tracker.listPage !== 'function') return { ok: false, error: { kind: 'unsupported', message: "backend '" + backendId + "' 未实现 listPage" } }
     let repoRef: any = null
     try { repoRef = reg.describe({ cwd }, backendId) } catch {}
-    if (!repoRef || !repoRef.refId) {
-      // 与快照那条链同样的兜底：注册表 describe 给不出 refId 时，按工作区问一次 owner/name。
-      try {
-        const rk: any = await getRepoKey(cwd)
-        if (rk && rk.owner && rk.name) repoRef = { backend: backendId, refId: rk.owner + '/' + rk.name, name: rk.owner + '/' + rk.name, url: 'https://github.com/' + rk.owner + '/' + rk.name }
-      } catch (e: any) { /* 拿不到就按下面如实失败 */ }
-    }
-    if (!repoRef || !repoRef.refId) return { ok: false, error: { kind: 'env', message: '认不出这个工作区对应的仓库（缺远端信息），按页取票用不了' } }
     // 工作单元（effort）是寻址范围：带上就放进 ref（不带 = 全仓库，单工作单元的后端行为不变）。
     if (a.effortId !== undefined && a.effortId !== null && a.effortId !== '') repoRef.effortId = String(a.effortId)
     const opCtx: any = {
@@ -129,6 +122,8 @@ export function createIssuePage(deps: IssuePageDeps): any {
       logEvent: backendLogEvent,
       isEnabled: backendLogEnabled,
     }
+    repoRef = await resolvePanelRepoRef(reg, backendId, repoRef, cwd, opCtx)
+    if (!repoRef || !repoRef.refId) return { ok: false, error: { kind: 'env', message: '认不出这个工作区对应的仓库（缺远端信息），按页取票用不了' } }
     const filter: any = { state: a.state || undefined, labels: a.labels && a.labels.length ? a.labels : undefined }
     const r: any = await tracker.listPage(repoRef, filter, { cursor: a.cursor || '', limit: a.limit }, opCtx)
     if (!r || !r.ok) return { ok: false, error: (r && r.error) || { kind: 'network', message: 'listPage 没有回包' } }

@@ -12,6 +12,7 @@
 import { idOfParts } from '../tracker/kernel/identity-keys.js'
 // #1115：opCtx 上那个计时器口的唯一实现（撤销真句柄的三档判据见该文件头）。
 import { hostTimers } from '../shared/host-timer/host-timers.js'
+import { resolvePanelRepoRef } from '../shared/panel-repo-ref.js'
 
 // ---------------------------------------------------------------------------
 // 类型（本次转 TypeScript：只写类型不写实现）。
@@ -60,6 +61,19 @@ interface CommentThreadsDeps {
  */
 export function createCommentThreads(deps: CommentThreadsDeps): any {
   const { normCwd, canonicalKey, selectEarly, isComposerSelection, getTrackerRegistry, getPlatform, ctx, timer, DEFAULT_CWD, errText, isRateLimitError, getRepoKey, runGh, execProc, fetchIssueDetail, fetchIssueIndex, fetchIssueIndexWindowed, commitIssueIndex, deltaRefresh, issueIndexFromSnapshot, issueIndexChanged, rememberIssueIndex, getCache, setCache, lastIssueIndexByRepo, lastProbeAtByRepo, logCtx } = deps as any
+  // Panel read paths (issue detail / comments / probe) shell out through glab, and the tracker
+  // op context must carry its own exec: 1.9.0-beta.5 omitted it in these three places, so every
+  // read on the GitLab room failed with "exec unavailable". This reuses the same execProc channel
+  // the comment write entry already used; only the via label differs (read).
+  function panelExec(cwd: any): any {
+    return async function(cmd: any, cargs: any, opts: any): Promise<any> {
+      const argv: any = [String(cmd)].concat(cargs || [])
+      const c: any = (opts && opts.cwd) || cwd
+      const r2: any = await execProc(argv, c, 'panel-read')
+      if (!r2.ok) throw new Error(r2.error || String(r2.code || 'exec failed'))
+      return { stdout: r2.text, text: r2.text, ok: true, code: Number.isInteger(r2.code) ? r2.code : 0 }
+    }
+  }
   // T5 #10 · 评论分页（反向分页 cursor，节流由 client 侧 600ms 控制；单页 50，失败重试与 3 次兜底）
   async function fetchIssueCommentsREST(n: any, after: any, cwd: any): Promise<any> {
     const repo: any = await getRepoKey(cwd)
@@ -138,10 +152,10 @@ export function createCommentThreads(deps: CommentThreadsDeps): any {
         if (!tracker || typeof tracker.get !== 'function') return { ok: false, error: { kind: 'unsupported', message: "backend '" + backendId + "' 未实现 get" } }
         let repoRef: any = null
         try { repoRef = reg.describe({ cwd }, backendId) } catch {}
-        if (!repoRef) repoRef = { backend: backendId, refId: cwd, name: String(cwd).split(/[\\/]/).pop() || backendId, url: '' }
+        const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs'), exec: panelExec(cwd) }
+        repoRef = await resolvePanelRepoRef(reg, backendId, repoRef, cwd, opCtx)
         // effort 维度：effort 是寻址范围，客户端带上来就放进 ref（不带 = 全仓库，单 effort 后端行为不变）
         if (args && args.effortId !== undefined && args.effortId !== null) repoRef.effortId = String(args.effortId)
-        const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs') }
         const key: string = String(n).padStart(2, '0')
         const r: any = await tracker.get(repoRef, key, {}, opCtx)
         if (!r || !r.ok) return r
@@ -199,10 +213,10 @@ export function createCommentThreads(deps: CommentThreadsDeps): any {
         if (!tracker || typeof tracker.get !== 'function') return { ok: false, error: { kind: 'unsupported', message: "backend '" + backendId + "' 未实现 get" } }
         let repoRef: any = null
         try { repoRef = reg.describe({ cwd }, backendId) } catch {}
-        if (!repoRef) repoRef = { backend: backendId, refId: cwd, name: String(cwd).split(/[\\/]/).pop() || backendId, url: '' }
+        const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs'), exec: panelExec(cwd) }
+        repoRef = await resolvePanelRepoRef(reg, backendId, repoRef, cwd, opCtx)
         // effort 维度：评论也按 effort 寻址（不带 = 全仓库；多 effort 同号时后端会诚实报 conflict）
         if (args && args.effortId !== undefined && args.effortId !== null) repoRef.effortId = String(args.effortId)
-        const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs') }
         const key: string = String(n).padStart(2, '0')
         const r: any = await tracker.get(repoRef, key, {}, opCtx)
         if (!r || !r.ok) return r
@@ -242,13 +256,7 @@ export function createCommentThreads(deps: CommentThreadsDeps): any {
       if (!sel || !sel.backendId) return { ok: false, error: { kind: 'unsupported', message: '未选择可用 tracker 后端，无法评论' } }
       let repoRef: any = null
       try { repoRef = reg.describe({ cwd: cwd }, sel.backendId) } catch (eDesc: any) {}
-      if (repoRef && !repoRef.refId && sel.backendId === 'github') {
-        // refId 补全（host 编排职责，与 buildSnapshot 同语义：git remote → .git/config → gh repo view 三级解析）
-        try {
-          const rk: any = await getRepoKey(cwd)
-          if (rk && rk.owner && rk.name) { repoRef.refId = rk.owner + '/' + rk.name; repoRef.name = repoRef.refId; repoRef.url = 'https://github.com/' + repoRef.refId }
-        } catch (eRk: any) {}
-      }
+      repoRef = await resolvePanelRepoRef(reg, sel.backendId, repoRef, cwd, opCtx)
       if (!repoRef || !repoRef.refId) return { ok: false, error: { kind: 'not-found', message: '无法解析目标仓库（refId missing）' } }
       // effort 维度：effort 是寻址范围；客户端从行数据带上来，放进 ref（不带 = 全仓库）
       if (args && args.effortId !== undefined && args.effortId !== null) repoRef.effortId = String(args.effortId)
@@ -283,8 +291,8 @@ export function createCommentThreads(deps: CommentThreadsDeps): any {
         if (tracker && typeof tracker.list === 'function') {
           let repoRef: any = null
           try { repoRef = reg.describe({ cwd }, _selProbe.backendId) } catch {}
-          if (!repoRef) repoRef = { backend: _selProbe.backendId, refId: cwd, name: String(cwd).split(/[\\/]/).pop() || _selProbe.backendId, url: '' }
-          const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs') }
+          const opCtx: any = { cwd, platform: await getPlatform(), fs: ctx.get('fs'), exec: panelExec(cwd) }
+          repoRef = await resolvePanelRepoRef(reg, _selProbe.backendId, repoRef, cwd, opCtx)
           const r: any = await tracker.list(repoRef, {}, opCtx)
           if (!r || !r.ok) return { ok: false, error: errText((r && r.error) || 'probe list 失败') }
           const all: any[] = Array.isArray(r.data) ? r.data : []

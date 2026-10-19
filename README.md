@@ -38,6 +38,11 @@ dsh plugin --profile desktop add dsh-mattpocock-skills-deck   # 用 DSH Desktop 
 dsh plugin --profile web add dsh-mattpocock-skills-deck@1.9.0-beta.5 --registry https://registry.npmjs.org
 #     或者
 dsh plugin --profile desktop add dsh-mattpocock-skills-deck@1.9.0-beta.5 --registry https://registry.npmjs.org
+
+# ③ 个人 fork（版本 0.1.0，从 GitHub 装；装法与上游更新流程见 docs/guides/fork-cap-nhat-tu-upstream.md）
+#    fork 的 0.1.0 与上面的 npm 版是同一个包名，两个都装会互相覆盖，只留一个：
+dsh plugin --profile desktop add github:phucnd0604/dsh-mattpocock-skills-deck   # 桌面应用
+dsh plugin --profile web add github:phucnd0604/dsh-mattpocock-skills-deck       # 自启 web 服务
 ```
 
 <div align="center">
@@ -60,6 +65,9 @@ dsh plugin --profile desktop add dsh-mattpocock-skills-deck@1.9.0-beta.5 --regis
 下面命令以 web profile 为例——**DSH Desktop 桌面应用用户请把所有 `--profile web` 换成 `--profile desktop`**。
 
 ```bash
+# fork 版（0.1.0）从 GitHub 装，免全局
+npx --yes @deepseek-ai/dsh plugin --profile web add github:phucnd0604/dsh-mattpocock-skills-deck
+
 # 免全局安装（想更稳，像上面一样锁版本）
 npx --yes @deepseek-ai/dsh plugin --profile web add dsh-mattpocock-skills-deck
 

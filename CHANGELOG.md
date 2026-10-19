@@ -1,3 +1,46 @@
+## 2026-10-19 · v0.1.0 personal fork: the panel reads GitLab again, the interface is English instead of Chinese, and the repo installs from GitHub
+
+- **What this is**: `phucnd0604/dsh-mattpocock-skills-deck` is a personal fork of
+  `FeatherHunter/dsh-mattpocock-skills-deck` that runs its own version line, starting at `0.1.0` and not
+  following upstream's `1.9.0-beta.5`. It carries exactly one commit on top of upstream and changes three
+  concrete things (the GitLab panel read paths, the interface language, install-from-GitHub).
+- **What changed (by what you can see)**:
+  - **The panel no longer reads GitLab as "404 Project Not Found" or "exec unavailable"**: every panel read
+    path (ticket detail, comments, probe, paged issues, snapshot, refresh, label colours, handoff claim) took
+    its `refId` straight from `reg.describe({cwd})`, and the GitLab room only fills `refId` when the
+    caller already handed it a handle carrying one — so the refId came back empty, the code fell back to
+    treating the local directory as the project path, and `glab` answered `404 Project Not Found`; those
+    paths also missed `exec` in `opCtx` and failed with `exec unavailable`. They now all go through
+    `resolvePanelRepoRef` (the step the agent-tool path already took) and every `opCtx` carries its own
+    `exec`. The resolver lives in `src/shared/panel-repo-ref.ts`: the same-layer-import gate forbids the
+    six host leaves to import each other, and the shared layer is where they can all reach it.
+  - **The interface language follows DSH instead of defaulting to Chinese**: English used to be selected only
+    when the locale started with `en`, and everything else (including `vi`) fell back to Chinese; now
+    Chinese is selected only when the locale starts with `zh`, and everything else gets English (with no
+    language in the snapshot, as in a bare Node run of the tests, it stays `zh`, so tests are unchanged).
+    The hard-coded `'zh'` in the skill-status probe is gone, and the panel's `wf.detect` calls now carry
+    `lang` through to the detection service.
+  - **Installable from GitHub**: the root `package.json` gained `main`, `exports`, `dsh.client` and a
+    `files: ["package"]` whitelist, so `dsh plugin add github:phucnd0604/dsh-mattpocock-skills-deck`
+    installs it. Build products stay out of git (`verify-build-artifacts` forbids tracked products); the
+    `prepare` script produces them during the install.
+  - **New** `docs/guides/fork-cap-nhat-tu-upstream.md`: how to install, how to rebase or merge when upstream
+    moves, what conflicts to expect, and what this fork changes.
+  - **The agent-facing documents are English**: `AGENTS.md`, `docs/agents/issue-tracker.md`,
+    `docs/agents/commit-convention.md` and `CONTEXT.md`. Commit messages are English from now on — the old
+    rule asked for Chinese, and an instruction file in Chinese is exactly what made agents answer in Chinese.
+- **Version**: the root manifest and the package manifest are both `0.1.0`; the candidate version pinned in
+  `tests/verify-config-store-package.ts` follows it.
+- **Commit**: the fork's single commit on top of `upstream/main`.
+- **Verification**: the build passes; type checking is green; the dependency-direction gate (no new
+  same-layer edges), the build-artifact gate, the gate map, the package YAML gate and the release contract all
+  pass; the smoke set is green. Four gates were already red on a pristine upstream clone and stay red for
+  reasons unrelated to this change (`verify-gate-map` before regeneration, one assertion in
+  `verify-cap-fold-browser`, the five pre-existing over-long files in `verify-file-granularity`, and
+  `verify-detail-levels` failing on "map with sub-tickets exists"); each reproduces unchanged on that clone.
+- **Impact**: machines that swap the npm release `1.9.0-beta.5` for this fork get the GitLab panel read paths
+  back; the interface follows the DSH language, so a non-Chinese environment no longer shows a Chinese panel.
+
 ## 2026-10-18 · v1.9.0-beta.5 测试版：随包更新系统升到 0.18.25，失败提示先分清还有没有救援路径
 
 - **这是什么**：1.9 系列的第四个对外发布版，版本号从 `1.9.0-beta.4` 推进到 `1.9.0-beta.5`，发到 npm 官方源的 `latest` 标签（与前几版同口径：候选版就是所有人默认拿到的那一版）。相对 `beta.4`，随包的更新系统升到 `0.18.25`，票据派生做了一笔更快但行为不变的优化，包说明与作者作品链接重新生成。

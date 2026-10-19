@@ -418,7 +418,7 @@ export function createPlatformChannel(deps: Deps) {
         // #968 技能按需：平时（链求值、普通探测）只问链条目录要的三项，人亲手点重查才问全量。
         // 范围由探测编排层按重查标记带来（见 detectionService），这里只按范围选名单；重查标记同时透给单项探测，
         // 让它绕过短时记住（刚装好的技能重查立即可见），平时则命中记住、不重复问。
-        const skillProbe = async ({ cwd, skillScope, force }: { cwd: string; skillScope?: unknown; force?: unknown }): Promise<SkillProbeBatch> => {
+        const skillProbe = async ({ cwd, skillScope, force, lang }: { cwd: string; skillScope?: unknown; force?: unknown; lang?: unknown }): Promise<SkillProbeBatch> => {
           // probeNames：全量即 shared/matt-skills.js:MATT_SKILL_PROBE_NAMES（单源）；链上三项即链目录真源；改探测集只改各真源一处即可
           const probeNames = selectSkillProbeNames(await getMattSkillProbeNames(), (typeof getChainSkillNames === 'function') ? await getChainSkillNames() : null, skillScope)
           const probes: Record<string, SkillProbe> = {}
@@ -428,7 +428,7 @@ export function createPlatformChannel(deps: Deps) {
           for (let i = 0; i < probeNames.length; i++) {
             const name = probeNames[i]
             try {
-              const r = await probeSkill(name, 'zh', cwd, { force: !!force })
+              const r = await probeSkill(name, String(lang || '') === 'en' ? 'en' : 'zh', cwd, { force: !!force })
               probes[name] = r
               if (r.level === 'pending') { hasPending = true; if (!pendingError && r.error) pendingError = r.error }
               else if (r.level !== 'ok') missing.push(name)

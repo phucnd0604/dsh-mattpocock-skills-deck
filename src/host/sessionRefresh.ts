@@ -11,6 +11,7 @@
 import { projectUiDescription } from '../tracker/ui-description.js'
 // 有效期住中央 YAML，调时间改 config/ttl.yaml。
 import { SNAPSHOT_TTL_MS } from '../shared/time-config/values.js'
+import { resolvePanelRepoRef } from '../shared/panel-repo-ref.js'
 
 // ===== 类型契约（#1155）：下面这些声明只给类型检查看，编译后一行都不剩，运行时不引用任何名字 =====
 // 为什么都收在文件顶部：本文件的依赖全部由接线处 index.js 注入（那份是 JS，不检查编译错误），
@@ -117,9 +118,9 @@ export function createSessionRefresh(deps: RefreshDeps) {
           if (!tracker) throw new Error('unknown backend ' + backendId)
           let repoRef: RepoRef = null
           try { repoRef = reg.describe({ cwd }, backendId) } catch {}
-          if (!repoRef) repoRef = { backend: backendId, refId: cwd, name: String(cwd).split(/[\\/]/).pop() || backendId, url: '' }
           // #927：刷新这一路的每条命令也过闸（分类同上：人的动作那一档，只记账、不降档）；没给 send 时照旧直发。
           const ctx2 = { cwd, platform: await getPlatform(), fs: ctx.get('fs'), exec: function (c: string, a: unknown[], o?: unknown) { if (typeof send !== 'function') return detectionExec(c, a, o, 'refresh'); const isGql = String((a && a[0]) || '') === 'api' && String((a && a[1]) || '').indexOf('graphql') >= 0; return send({ source: 'panel.refresh', kind: 'detail', bucket: isGql ? 'graphql' : 'rest', workspaceKey: cwd }, function () { return detectionExec(c, a, o, 'refresh') }).then(function (r) { return r.result }) } }
+        repoRef = await resolvePanelRepoRef(reg, backendId, repoRef, cwd, ctx2)
           const { createSnapshotComposer } = await import('./tracker/snapshot.js')
           const composer: Composer = createSnapshotComposer(reg, { snapshotTtl: SNAPSHOT_TTL_MS })
           const res = await composer.composeSnapshot(backendId, repoRef, ctx2, { ifNoneMatch: (args && (args.ifNoneMatch || args.version)) || '', force: true })

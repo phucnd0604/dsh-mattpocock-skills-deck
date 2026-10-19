@@ -66,7 +66,7 @@ declare function closeFormModal(...args: any[]): any;
       return (async function (): Promise<void> {
         try {
           if (typeof host !== 'undefined' && host.call) {
-            await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined })
+            await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined, lang: (typeof promptLang === 'function' ? promptLang() : 'zh') })
           }
           try { if (typeof loadSnapshot === 'function') loadSnapshot(st, true, true) } catch(_){}
           try { if (typeof chainEventRefresh === 'function') await chainEventRefresh(st, 'user-recheck'); else if (typeof loadChain === 'function') await loadChain(st, true, 'user-recheck') } catch(_){}
@@ -78,7 +78,7 @@ declare function closeFormModal(...args: any[]): any;
       return (async function (): Promise<void> {
         try {
           if (typeof host !== 'undefined' && host.call) {
-            await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined })
+            await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined, lang: (typeof promptLang === 'function' ? promptLang() : 'zh') })
           }
           try { if (typeof loadSnapshot === 'function') loadSnapshot(st, true, true) } catch(_){}
           try { if (typeof chainEventRefresh === 'function') await chainEventRefresh(st, 'action-done'); else if (typeof loadChain === 'function') await loadChain(st, true, 'action-done') } catch(_){}

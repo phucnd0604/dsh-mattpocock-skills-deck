@@ -40,6 +40,10 @@ dsh plugin --profile desktop add dsh-mattpocock-skills-deck   # DSH Desktop app 
 # Pin to latest for extra stability (currently 1.9.0-beta.5):
 # dsh plugin --profile desktop add dsh-mattpocock-skills-deck@1.9.0-beta.5 --registry https://registry.npmjs.org
 
+# Personal fork (version 0.1.0): install straight from GitHub instead of npm —
+# see docs/guides/fork-cap-nhat-tu-upstream.md for install and upstream-sync steps
+# dsh plugin --profile desktop add github:phucnd0604/dsh-mattpocock-skills-deck
+
 # ③ That's it — the panel opens in DSH's own right sidebar (no third-party plugin needed)
 ```
 

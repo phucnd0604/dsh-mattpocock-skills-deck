@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-19T00:12:17.642Z",
+  "generatedAt": "2026-10-19T04:26:53.512Z",
   "generatedBy": "node scripts/gate-map.mts",
-  "chainLength": 294,
-  "gateCount": 294,
-  "attributedGates": 263,
+  "chainLength": 295,
+  "gateCount": 295,
+  "attributedGates": 264,
   "unattributedGates": 31,
   "buildOutputOnlyGates": 18,
   "completionRecordedGates": 6,
   "smokeLength": 5,
   "smokeCompletionRecordedGates": 2,
-  "graphFileCount": 724,
+  "graphFileCount": 730,
   "gates": [
     {
       "step": "node tests/verify-1207-splice-ts.ts",
@@ -82,6 +82,7 @@
         "src/host",
         "src/shared",
         "src/shared/host-timer/host-timers.js",
+        "src/shared/panel-repo-ref.js",
         "src/shared/refresh/budget.js",
         "src/shared/refresh/src/budget.ts",
         "src/shared/refresh/step-cost.js",
@@ -117,7 +118,7 @@
       "buildOutputOnly": false,
       "completionRecord": false,
       "expectedAssertions": 0,
-      "reason": "归属来自：读文件调用（readFileSync / readFile / path.join(ROOT, ...)） 11 条；源码里的路径字面量 21 条"
+      "reason": "归属来自：读文件调用（readFileSync / readFile / path.join(ROOT, ...)） 11 条；源码里的路径字面量 22 条"
     },
     {
       "step": "node tests/verify-leaves.ts",
@@ -690,6 +691,7 @@
         "src/deck/shell",
         "src/deck/shell/call-shell.ts",
         "src/deck/shell/minimal-spec.ts",
+        "src/deck/shell/work-path-bindings.ts",
         "src/deck/tools",
         "src/deck/tools/context.ts",
         "src/deck/tools/issue-create.ts",
@@ -703,6 +705,7 @@
         "src/host/refresh/gate.ts",
         "src/host/refresh/ledger.ts",
         "src/shared/refresh/budget.js",
+        "src/shared/refresh/chain.js",
         "src/shared/refresh/tool-cost.js",
         "src/tracker/registry/core.ts",
         "src/tracker/rooms/markdown/index.ts",
@@ -722,7 +725,7 @@
       "buildOutputOnly": false,
       "completionRecord": false,
       "expectedAssertions": 0,
-      "reason": "归属来自：载入模块（require / import / pathToFileURL） 1 条；源码里的路径字面量 20 条"
+      "reason": "归属来自：载入模块（require / import / pathToFileURL） 1 条；源码里的路径字面量 22 条"
     },
     {
       "step": "node tests/verify-dependency-rules.ts",
@@ -1631,6 +1634,25 @@
       "completionRecord": false,
       "expectedAssertions": 0,
       "reason": "归属来自：载入模块（require / import / pathToFileURL） 1 条；源码里的路径字面量 5 条"
+    },
+    {
+      "step": "node tests/verify-1261-work-route-receipt.ts",
+      "file": "tests/verify-1261-work-route-receipt.ts",
+      "guards": [
+        "src/deck/shell/work-path-bindings.ts",
+        "src/deck/shell/work-path-readout.ts",
+        "src/deck/shell/work-path-record.ts",
+        "src/shared/refresh/chain.js"
+      ],
+      "dirs": [
+        "src/deck/shell",
+        "src/shared/refresh"
+      ],
+      "unattributed": false,
+      "buildOutputOnly": false,
+      "completionRecord": false,
+      "expectedAssertions": 0,
+      "reason": "归属来自：源码里的路径字面量 4 条"
     },
     {
       "step": "node tests/verify-3-workspace-switch.ts",
@@ -4782,6 +4804,7 @@
       "file": "tests/verify-golden-receipts.ts",
       "guards": [
         "scripts/ts-hook.mts",
+        "src/deck/shell/work-path-bindings.ts",
         "src/deck/tools/context.ts",
         "src/deck/tools/issue-create.ts",
         "src/deck/tools/issue-get.ts",
@@ -4803,6 +4826,7 @@
       ],
       "dirs": [
         "scripts",
+        "src/deck/shell",
         "src/deck/tools",
         "src/host/refresh",
         "src/shared/refresh",
@@ -4815,7 +4839,7 @@
       "buildOutputOnly": false,
       "completionRecord": false,
       "expectedAssertions": 0,
-      "reason": "归属来自：载入模块（require / import / pathToFileURL） 1 条；静态 import 说明符 1 条；源码里的路径字面量 17 条"
+      "reason": "归属来自：载入模块（require / import / pathToFileURL） 1 条；静态 import 说明符 1 条；源码里的路径字面量 18 条"
     },
     {
       "step": "node tests/verify-handoff-isolation-787.ts",
@@ -7428,6 +7452,7 @@
       "node tests/verify-1195-budget-start.ts",
       "node tests/verify-1195-cell-cancel.ts",
       "node tests/verify-1245-plan-resume.ts",
+      "node tests/verify-1261-work-route-receipt.ts",
       "node tests/verify-656-subworkspace-acceptance.ts",
       "node tests/verify-895-bulk-deadline.ts",
       "node tests/verify-895-github-memo.ts",
@@ -7436,7 +7461,8 @@
       "node tests/verify-934-935-invariants.ts",
       "node tests/verify-947-workspace-file.ts",
       "node tests/verify-957-workspace-writer.ts",
-      "node tests/verify-detection-log-reach.ts"
+      "node tests/verify-detection-log-reach.ts",
+      "node tests/verify-golden-receipts.ts"
     ],
     "src/deck/tools": [
       "node tests/verify-deck-no-hang.ts",
@@ -7700,6 +7726,7 @@
       "node tests/verify-1195-budget-start.ts",
       "node tests/verify-1195-timeout-split.ts",
       "node tests/verify-1245-plan-resume.ts",
+      "node tests/verify-1261-work-route-receipt.ts",
       "node tests/verify-709-no-self-continuing-timers.ts",
       "node tests/verify-714-session-tickets.ts",
       "node tests/verify-723-gate-wiring.ts",
@@ -8223,9 +8250,9 @@
   },
   "coverage": {
     "sourceRoot": "src",
-    "fileCount": 737,
+    "fileCount": 743,
     "dirCount": 54,
-    "coveredFileCount": 737,
+    "coveredFileCount": 743,
     "ungatedFileCount": 0,
     "ungatedDirCount": 0,
     "dedicatedDirCount": 53,
@@ -8599,6 +8626,10 @@
       "src/deck/shell/session-workdir.ts",
       "src/deck/shell/table-cell.ts",
       "src/deck/shell/tool-table.ts",
+      "src/deck/shell/work-path-bindings.ts",
+      "src/deck/shell/work-path-readout.ts",
+      "src/deck/shell/work-path-record.ts",
+      "src/deck/shell/work-path-store.ts",
       "src/deck/shell/workspace-anchor.ts",
       "src/deck/shell/write-mutex.ts",
       "src/deck/tools/context.ts",
@@ -8733,6 +8764,8 @@
       "src/shared/naming-titles.ts",
       "src/shared/naming-tracking.js",
       "src/shared/naming-tracking.ts",
+      "src/shared/panel-repo-ref.js",
+      "src/shared/panel-repo-ref.ts",
       "src/shared/refresh-workspace-key.js",
       "src/shared/refresh-workspace-key.ts",
       "src/shared/refresh/README.md",

@@ -308,8 +308,15 @@ console.log('\n三棵新树镜像校验（后缀换算 + 转译结果比对）')
   //     （真源是 src/shared/refresh/src/step-cost.ts），产物落域根，与 budget.js 同类。同样不抬高上限。
   //     · src/shared/refresh/tuning.js —— #1069：共用调参表（真源是 src/shared/refresh/src/tuning.ts），
   //     产物落域根，与 budget.js 同类。同样不抬高上限。
+  //     · src/shared/panel-repo-ref.js —— product deliberately added by this fork: the repo-reference
+  //     resolver shared by the panel read paths (source: src/shared/panel-repo-ref.ts; why it lives in the
+  //     shared layer instead of beside its callers is in that file's header — the same-layer-import gate
+  //     forbids the six host leaves to import each other). It lands as a same-named .js in the source tree
+  //     because the host leaves resolve it by .js specifier (the same shape as host-timers.js). It does not
+  //     raise the cap either: that number counts what the migration line still has left.
   const KNOWN_PRODUCTS_OUT_OF_SCOPE = [
     'src/tracker/contract/vocabulary.js',
+    'src/shared/panel-repo-ref.js',
     'src/client/kernel/api-io.js',
     'src/shared/host-timer/host-timers.js',
     'src/shared/refresh/step-cost.js',

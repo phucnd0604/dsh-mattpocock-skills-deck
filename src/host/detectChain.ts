@@ -204,7 +204,7 @@ export function createDetectChain(deps: DetectChainDeps) {
       if (force) resetGhCache()
       try {
         const svc = await getDetectionService()
-        const res = await svc.detect({ cwd }, { force }) // 上报已退役不传：刚选的经写入口直达文件，本轮即读到
+        const res = await svc.detect({ cwd }, { force, lang: (args && args.lang === 'en') ? 'en' : 'zh' }) // 上报已退役不传：刚选的经写入口直达文件，本轮即读到
         // #1048：结论线（常驻 #16 `detection.detect`）已挪到统一判定出口 `src/tracker/detection/backendDecision.ts`
         //   一处发出 —— 出口经探测服务拿到日志出口（`detectionService` 把 `logCtx` 递进去），四条路因此说同一件事。
         //   这里原来补发的那一条已删：同一次判定只该有一条结论，两条只是把同一件事记两遍。

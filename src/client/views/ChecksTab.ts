@@ -118,7 +118,7 @@ export const ChecksTab = ({ st }: any) => {
           refresh: async function (target: any) {
             try {
               // #669 第 6 件（ADR 20260921）：hint 只报「用户亲手选过的那条」（派生值不许冒充意图）
-              if (typeof host !== 'undefined' && host.call) { await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined }) }
+              if (typeof host !== 'undefined' && host.call) { await host.call('wf.detect', { cwd: st.cwd || '', force: true, backendId: (typeof userHintOf === 'function' ? userHintOf(st.selection) : undefined) || undefined, lang: (typeof promptLang === 'function' ? promptLang() : 'zh') }) }
             } catch (e) {}
             try { (typeof chainEventRefresh === 'function' ? chainEventRefresh(st, whyRecheck) : loadChain(st, true, whyRecheck)) } catch (e) {}
             try { loadSnapshot(st, true, true) } catch (e) {}
